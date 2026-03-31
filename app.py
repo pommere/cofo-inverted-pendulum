@@ -53,9 +53,9 @@ else:
     # Generate Synthetic "Ideal" Data (1.25 Hz walking frequency)
     t = np.linspace(0, 10, 1000)
     # 1.25Hz signal simulates a standard brisk walk
-    synth_accel = 9.8 + 2.0 * np.sin(2 * np.pi * 1.47 * t) + np.random.normal(0, 0.3, 1000)
+    synth_accel = 9.8 + 2.0 * np.sin(2 * np.pi * 1.48 * t) + np.random.normal(0, 0.3, 1000)
     df = pd.DataFrame({'Time (s)': t, 'Absolute acceleration (m/s^2)': synth_accel})
-    st.info("💡 **No file uploaded yet.** Displaying synthetic 'Perfect Walk' data (1.25 Hz) as an example.")
+    st.info("💡 **No file uploaded yet.** Displaying synthetic 'Perfect Walk' data (1.48 Hz) as an example.")
 
 # --- 5. Data Analysis & Physics ---
 try:
