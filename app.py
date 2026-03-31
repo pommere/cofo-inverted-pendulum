@@ -31,10 +31,23 @@ def lorentzian(x, a, x0, gamma):
     return a * (gamma**2 / ((x - x0)**2 + gamma**2))
 
 def calculate_g_physics(step_freq, hip_cm, ankle_cm):
-    L_meters = (hip_cm - ankle_cm) / 100.0
-    stride_period = 2 / step_freq
-    g_calc = (4 * np.pi**2 * L_meters) / (stride_period**2)
-    return g_calc, L_meters
+    """
+    Calculates g using a Physical Pendulum model.
+    L_total = Distance from Talus to Greater Trochanter.
+    L_cm = 0.55 * L_total (Biomechanical center of mass).
+    """
+    L_total = (hip_cm - ankle_cm) / 100.0  # Convert to meters
+    # 1. Define Center of Mass based on your Lab Manual
+    L_cm = 0.55 * L_total 
+    # 2. Determine Stride Period (Time for one full back-and-forth swing)
+    stride_period = 2 / step_freq 
+    # 3. Calculate g
+    # For a physical pendulum, g = (4 * pi^2 * I) / (m * L_cm * T^2)
+    # Using the standard 'effective length' approximation for a human leg:
+    # L_eff is approximately 0.6 to 0.7 of L_total.
+    L_eff = 0.65 * L_total 
+    g_calc = (4 * np.pi**2 * L_eff) / (stride_period**2)
+    return g_calc, L_total
 
 # --- 4. File Upload & Processing ---
 uploaded_file = st.file_uploader("Upload your Phyphox CSV file", type=["csv"])
