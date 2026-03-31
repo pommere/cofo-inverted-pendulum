@@ -76,14 +76,36 @@ if uploaded_file:
         calc_g, L_eff = calculate_g_physics(f0_fit, h_hip, h_ankle)
         percent_error = abs(calc_g - local_g) / local_g * 100
 
-        # --- Planetary Location Logic ---
+        # --- Expanded Universe Logic ---
         planets = [
-            ("Pluto", 0.62), ("Moon", 1.62), ("Mars", 3.71), ("Mercury", 3.70),
+            ("Pluto", 0.62), ("the Moon", 1.62), ("Mars", 3.71), ("Mercury", 3.70),
             ("Uranus", 8.69), ("Venus", 8.87), ("Earth", 9.806), ("Saturn", 10.44),
-            ("Neptune", 11.15), ("Jupiter", 24.79), ("the Sun", 274.0)
+            ("Neptune", 11.15), ("Jupiter", 24.79), ("a White Dwarf star", 500000.0)
         ]
+        
         closest_planet = min(planets, key=lambda x: abs(x[1] - calc_g))
         planet_name, planet_g = closest_planet
+
+        # --- Creative Logic for Outliers ---
+        if percent_error < 5.0:
+            st.success(f"✅ **Mission Control:** Great technique! Your gait is perfectly calibrated for **Earth**.")
+        
+        elif 0.1 <= calc_g <= 30.0:
+            # Standard Planetary Range
+            st.warning(f"🚀 **Interplanetary coordinates confirmed:** Based on your height and stride, you aren't on Earth... you're walking on **{planet_name}** (g ≈ {planet_g} m/s²).")
+            
+            if abs(calc_g - 15.0) < 2.0:
+                st.info("💡 **Instructor Note:** You're in the 'Neptune-Jupiter Gap.' This usually happens if you're walking with a very fast, stiff-legged cadence!")
+        
+        elif calc_g > 30.0:
+            # Extreme High Outlier (Usually Step vs Stride error)
+            st.error(f"☢️ **Gravitational Redline:** Your calculated g is **{calc_g:.2f} m/s²**. You're walking on a **Neutron Star**.")
+            st.info("🔍 **Troubleshooting:** This high value usually means the app found your *Step* frequency instead of your *Stride* frequency. Try re-fitting the lower frequency peak!")
+            
+        else:
+            # Extreme Low Outlier
+            st.error(f"☁️ **Low-Density Drift:** Your calculated g is **{calc_g:.2f} m/s²**. You are essentially floating in **Interstellar Space**.")
+            st.info("🔍 **Troubleshooting:** Check your Floor-to-Hip measurement. If your leg length is entered incorrectly, the pendulum model 'drifts' into deep space.")
 
         # --- 5. Display Results & Metrics ---
         st.subheader("Lab Analysis Results")
@@ -91,11 +113,6 @@ if uploaded_file:
         c1.metric("Step Frequency ($f_0$)", f"{f0_fit:.3f} Hz")
         c2.metric("Calculated Gravity ($g$)", f"{calc_g:.2f} m/s²")
         c3.metric("Relative Error", f"{percent_error:.1f}%", delta=f"{calc_g - local_g:.2f}", delta_color="inverse")
-
-        if percent_error < 5.0:
-            st.success(f"✅ Great technique! Your gait is perfectly calibrated for **Earth**.")
-        else:
-            st.warning(f"🚀 Based on your height and stride, you aren't on Earth... you're walking on **{planet_name}** (g ≈ {planet_g} m/s²).")
 
         # --- 6. Visualization ---
         fig, ax = plt.subplots(figsize=(12, 6))
