@@ -32,6 +32,33 @@ env_choice = st.sidebar.selectbox("Simulate Walking On:", ["Earth", "Moon", "Mar
 env_g_map = {"Earth": 9.806, "Moon": 1.62, "Mars": 3.71, "Jupiter": 24.79}
 sim_g = env_g_map[env_choice]
 
+# --- Planetary Location Logic ---
+        planets = [
+            ("Pluto", 0.62), ("Moon", 1.62), ("Mars", 3.71), ("Mercury", 3.70),
+            ("Uranus", 8.69), ("Venus", 8.87), ("Earth", 9.806), ("Saturn", 10.44),
+            ("Neptune", 11.15), ("Jupiter", 24.79), ("The Sun", 274.0)
+        ]
+        
+        # Find the planet with the closest g-value to their calculated g
+        closest_planet = min(planets, key=lambda x: abs(x[1] - calc_g))
+        planet_name, planet_g = closest_planet
+
+        # --- Display Results & Metrics ---
+        st.subheader("Lab Analysis Results")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Step Frequency ($f_0$)", f"{f0_fit:.3f} Hz")
+        c2.metric("Calculated Gravity ($g$)", f"{calc_g:.2f} m/s²")
+        
+        # Color code the error: Green if close to Earth, Red if far off
+        delta_val = f"{percent_error:.1f}%"
+        c3.metric("Relative Error", delta_val, delta=f"{calc_g - local_g:.2f}", delta_color="inverse")
+
+        # The "Where am I?" Feature
+        if percent_error < 5.0:
+            st.success(f"✅ Great technique! Your gait is perfectly calibrated for **Earth**.")
+        else:
+            st.warning(f"🚀 Based on your height and stride, you aren't on Earth... you're walking on **{planet_name}** (g ≈ {planet_g} m/s²).")
+
 # --- 3. Physics & Math Functions ---
 def lorentzian(x, a, x0, gamma):
     """Lorentzian function for fitting the resonance peak."""
