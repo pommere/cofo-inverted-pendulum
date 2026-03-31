@@ -7,7 +7,7 @@ from scipy.signal import find_peaks
 import io
 
 # 1. Page Branding & UI
-st.set_page_config(page_title="Gait Analysis Lab", layout="centered")
+st.set_page_config(page_title="Inverted Pendulum Lab", layout="centered")
 st.title("🏃‍♂️ Inverted Pendulum Gait Lab")
 st.markdown("""
 Welcome to the Physics Lab! 
