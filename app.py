@@ -12,7 +12,7 @@ st.title("Inverted Pendulum Lab")
 st.markdown("""
 Welcome to the Physics Lab! Students deduce the local acceleration due to gravity ($g$)
 by modeling human locomotion as an **inverted pendulum**. The validity of this model
-is explored by examining the **Froude Number** (Fr) constraints and biological noise found
+is explored by examining the **Froude Number** ($Fr$) constraints and biological noise found
 in their own gait.
 1. Upload your **Phyphox CSV** file below.
 2. The app will calculate the FFT (which converts your walking motion from a time signal into a frequency spectrum) to estimate $g$ from your stride period.
@@ -20,7 +20,6 @@ in their own gait.
 
 # --- 2. Sidebar: Biometrics & Environment ---
 st.sidebar.header("1. Anatomical Measurements")
-# Measurements from floor to specific anatomical markers
 h_hip = st.sidebar.number_input("Floor to Hip (Greater Trochanter) [cm]", value=90.0, help="Pivot point for the inverted pendulum model.")
 h_ankle = st.sidebar.number_input("Floor to Ankle (Talus) [cm]", value=8.0, help="Height of the 'foot' pivot above the floor.")
 
@@ -32,33 +31,6 @@ env_choice = st.sidebar.selectbox("Simulate Walking On:", ["Earth", "Moon", "Mar
 env_g_map = {"Earth": 9.806, "Moon": 1.62, "Mars": 3.71, "Jupiter": 24.79}
 sim_g = env_g_map[env_choice]
 
-# --- Planetary Location Logic ---
-        planets = [
-            ("Pluto", 0.62), ("Moon", 1.62), ("Mars", 3.71), ("Mercury", 3.70),
-            ("Uranus", 8.69), ("Venus", 8.87), ("Earth", 9.806), ("Saturn", 10.44),
-            ("Neptune", 11.15), ("Jupiter", 24.79), ("The Sun", 274.0)
-        ]
-        
-        # Find the planet with the closest g-value to their calculated g
-        closest_planet = min(planets, key=lambda x: abs(x[1] - calc_g))
-        planet_name, planet_g = closest_planet
-
-        # --- Display Results & Metrics ---
-        st.subheader("Lab Analysis Results")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Step Frequency ($f_0$)", f"{f0_fit:.3f} Hz")
-        c2.metric("Calculated Gravity ($g$)", f"{calc_g:.2f} m/s²")
-        
-        # Color code the error: Green if close to Earth, Red if far off
-        delta_val = f"{percent_error:.1f}%"
-        c3.metric("Relative Error", delta_val, delta=f"{calc_g - local_g:.2f}", delta_color="inverse")
-
-        # The "Where am I?" Feature
-        if percent_error < 5.0:
-            st.success(f"✅ Great technique! Your gait is perfectly calibrated for **Earth**.")
-        else:
-            st.warning(f"🚀 Based on your height and stride, you aren't on Earth... you're walking on **{planet_name}** (g ≈ {planet_g} m/s²).")
-
 # --- 3. Physics & Math Functions ---
 def lorentzian(x, a, x0, gamma):
     """Lorentzian function for fitting the resonance peak."""
@@ -69,7 +41,6 @@ def calculate_g_physics(step_freq, hip_cm, ankle_cm):
     # L_leg is the distance from ankle to hip pivot
     L_meters = (hip_cm - ankle_cm) / 100.0
     # In this model: T (Stride Period) = 2 / step_frequency
-    # Formula: g = (4 * pi^2 * L) / T^2
     stride_period = 2 / step_freq
     g_calc = (4 * np.pi**2 * L_meters) / (stride_period**2)
     return g_calc, L_meters
@@ -94,7 +65,6 @@ if uploaded_file:
         magnitude_norm /= np.max(magnitude_norm)
 
         # --- Peak Finding Logic ---
-        # Search range 1.0Hz to 4.0Hz (typical human walking)
         search_mask = (frequencies >= 1.0) & (frequencies <= 4.0)
         f_search = frequencies[search_mask]
         m_search = magnitude_norm[search_mask]
@@ -112,47 +82,4 @@ if uploaded_file:
 
         # --- Final Physics Calculations ---
         calc_g, L_eff = calculate_g_physics(f0_fit, h_hip, h_ankle)
-        percent_error = abs(calc_g - local_g) / local_g * 100
-
-        # --- 5. Display Results & Metrics ---
-        st.subheader("Lab Analysis Results")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Step Frequency ($f_0$)", f"{f0_fit:.3f} Hz")
-        c2.metric("Calculated Gravity ($g$)", f"{calc_g:.2f} m/s²")
-        c3.metric("Relative Error", f"{percent_error:.1f}%", delta_color="inverse")
-
-        if env_choice != "Earth":
-            # Predict required frequency for a different planet's gravity
-            # f = sqrt(g / (4 * pi^2 * L)) * 2
-            theory_f = np.sqrt(sim_g / (4 * np.pi**2 * L_eff)) * 2
-            st.info(f"🌌 **Simulation Mode:** On **{env_choice}**, your natural walking frequency would be ~**{theory_f:.3f} Hz**.")
-
-        # --- 6. Visualization ---
-        fig, ax = plt.subplots(figsize=(12, 6))
-        
-        # Plot raw data
-        ax.plot(frequencies, magnitude_norm, color='red', alpha=0.5, label='Normalized FFT Data')
-        
-        # Plot Lorentzian Fit and Shading
-        x_curve = np.linspace(0.5, upper_limit, 1000)
-        y_curve = lorentzian(x_curve, *popt)
-        ax.plot(x_curve, y_curve, color='black', lw=2.5, label=f'Lorentzian Fit ($f_0$ = {f0_fit:.3f} Hz)')
-        ax.fill_between(x_curve, y_curve, color='lightgray', alpha=0.5, label='Resonance Area')
-        
-        # Blue dashed line at peak
-        ax.axvline(f0_fit, color='blue', linestyle='--', alpha=0.8, label='Center Frequency')
-
-        # Formatting
-        ax.set_xlim(0, upper_limit)
-        ax.set_ylim(0, 1.1)
-        ax.set_xlabel("Frequency (Hz)", fontsize=12)
-        ax.set_ylabel("Normalized Magnitude", fontsize=12)
-        ax.set_title("Gait Resonance Spectrum", fontsize=14)
-        ax.grid(True, linestyle=':', alpha=0.6)
-        ax.legend(loc='upper right', frameon=True, shadow=True)
-        
-        st.pyplot(fig)
-
-    except Exception as e:
-        st.error(f"Error processing file: {e}")
-        st.warning("Make sure your CSV file is exported from Phyphox and has 'Time (s)' and 'Absolute acceleration (m/s^2)' columns.")
+        percent_error = abs(calc_g - local_g) / local_g * 1
