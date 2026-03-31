@@ -7,7 +7,7 @@ from scipy.signal import find_peaks
 import io
 
 # 1. Page Branding & UI
-st.set_page_config(page_title="Inverted Pendulum Lab", layout="centered")
+st.set_page_config(page_title="🌍 Inverted Pendulum Lab", layout="centered")
 st.title("Inverted Pendulum Lab")
 st.markdown("""
 Welcome to the Physics Lab! Students deduce the local acceleration due to gravity ($g$)
