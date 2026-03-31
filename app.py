@@ -8,82 +8,124 @@ import io
 
 # 1. Page Branding & UI
 st.set_page_config(page_title="Inverted Pendulum Lab", layout="centered")
-st.title("🏃‍♂️ Inverted Pendulum Gait Lab")
+st.title("Inverted Pendulum Lab")
 st.markdown("""
-Welcome to the Physics Lab! 
+Welcome to the Physics Lab! Students deduce the local acceleration due to gravity ($g$)
+by modeling human locomotion as an \term{inverted pendulum}. The validity of this model
+is explored by examining the \term{Froude Number} constraints and biological noise found
+in their own gait.
 1. Upload your **Phyphox CSV** file below.
 2. The app will calculate the FFT and estimate **g**.
 """)
 
-# 2. Physics Logic
+# --- 2. Sidebar: Biometrics & Environment ---
+st.sidebar.header("1. Anatomical Measurements")
+# Measurements from floor to specific anatomical markers
+h_hip = st.sidebar.number_input("Floor to Hip (Greater Trochanter) [cm]", value=90.0, help="Pivot point for the inverted pendulum model.")
+h_ankle = st.sidebar.number_input("Floor to Ankle (Talus) [cm]", value=8.0, help="Height of the 'foot' pivot above the floor.")
+
+st.sidebar.header("2. Gravity Settings")
+local_g = st.sidebar.number_input("Local Gravity (m/s²)", value=9.806, help="Standard Earth gravity is 9.806. Point Lookout is ~9.80.")
+env_choice = st.sidebar.selectbox("Simulate Walking On:", ["Earth", "Moon", "Mars", "Jupiter"])
+
+# Planetary gravity constants for comparison
+env_g_map = {"Earth": 9.806, "Moon": 1.62, "Mars": 3.71, "Jupiter": 24.79}
+sim_g = env_g_map[env_choice]
+
+# --- 3. Physics & Math Functions ---
 def lorentzian(x, a, x0, gamma):
+    """Lorentzian function for fitting the resonance peak."""
     return a * (gamma**2 / ((x - x0)**2 + gamma**2))
 
-def calculate_g(step_freq, height_ft):
-    height_m = height_ft * 0.3048
-    L_eff = height_m * 0.2385 
-    T = 2 / step_freq
-    return (4 * np.pi**2 * L_eff) / (T**2)
+def calculate_g_physics(step_freq, hip_cm, ankle_cm):
+    """Calculates g using the inverted pendulum model of walking."""
+    # L_leg is the distance from ankle to hip pivot
+    L_meters = (hip_cm - ankle_cm) / 100.0
+    # In this model: T (Stride Period) = 2 / step_frequency
+    # Formula: g = (4 * pi^2 * L) / T^2
+    stride_period = 2 / step_freq
+    g_calc = (4 * np.pi**2 * L_meters) / (stride_period**2)
+    return g_calc, L_meters
 
-# 3. Sidebar for Student Inputs
-st.sidebar.header("Lab Parameters")
-h_min = st.sidebar.number_input("Min Student Height (ft)", value=4.5, step=0.1)
-h_max = st.sidebar.number_input("Max Student Height (ft)", value=7.0, step=0.1)
-
-# 4. File Uploader
-uploaded_file = st.file_uploader("Drop your Phyphox CSV here", type=["csv"])
+# --- 4. File Upload & Processing ---
+uploaded_file = st.file_uploader("Upload your Phyphox CSV file", type=["csv"])
 
 if uploaded_file:
     try:
-        # Read data
+        # Load the data
         df = pd.read_csv(uploaded_file)
-        # Ensure column names match Phyphox default export
+        # Standard Phyphox column headers
         time = df['Time (s)'].values
         accel = df['Absolute acceleration (m/s^2)'].values
 
-        # FFT & Normalization
+        # --- FFT & Normalization ---
         dt = np.mean(np.diff(time))
         accel_detrended = accel - np.mean(accel)
-        fft_vals = np.fft.rfft(accel_detrended)
-        freqs = np.fft.rfftfreq(len(accel), d=dt)
-        mag = np.abs(fft_vals) / len(accel)
-        mag /= np.max(mag)
+        fft_values = np.fft.rfft(accel_detrended)
+        frequencies = np.fft.rfftfreq(len(accel), d=dt)
+        magnitude_norm = np.abs(fft_values) / len(accel)
+        magnitude_norm /= np.max(magnitude_norm)
 
-        # Robust Peak Logic
-        search_mask = (freqs >= 1.0) & (freqs <= 5.0)
-        peaks, _ = find_peaks(mag[search_mask], height=0.1, distance=20)
-        f_guess = freqs[search_mask][peaks[0]] if len(peaks) > 0 else freqs[search_mask][np.argmax(mag[search_mask])]
-
-        # Lorentzian Fit
-        upper_limit = max(3.0, 1.5 * f_guess)
-        mask = (freqs >= 0.5) & (freqs <= upper_limit)
-        popt, _ = curve_fit(lorentzian, freqs[mask], mag[mask], p0=[1.0, f_guess, 0.1])
+        # --- Peak Finding Logic ---
+        # Search range 1.0Hz to 4.0Hz (typical human walking)
+        search_mask = (frequencies >= 1.0) & (frequencies <= 4.0)
+        f_search = frequencies[search_mask]
+        m_search = magnitude_norm[search_mask]
         
-        # Calculate g-range
-        g_low = calculate_g(popt[1], h_min)
-        g_high = calculate_g(popt[1], h_max)
+        peaks, _ = find_peaks(m_search, height=0.1, distance=20)
+        f_step_guess = f_search[peaks[0]] if len(peaks) > 0 else f_search[np.argmax(m_search)]
 
-        # Visualization
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(freqs, mag, color='red', alpha=0.4, label='Raw FFT Data')
+        # --- Lorentzian Fitting ---
+        upper_limit = max(3.0, 1.5 * f_step_guess)
+        mask = (frequencies >= 0.5) & (frequencies <= upper_limit)
+        x_fit, y_fit = frequencies[mask], magnitude_norm[mask]
         
+        popt, _ = curve_fit(lorentzian, x_fit, y_fit, p0=[1.0, f_step_guess, 0.1])
+        a_fit, f0_fit, gamma_fit = popt
+
+        # --- Final Physics Calculations ---
+        calc_g, L_eff = calculate_g_physics(f0_fit, h_hip, h_ankle)
+        percent_error = abs(calc_g - local_g) / local_g * 100
+
+        # --- 5. Display Results & Metrics ---
+        st.subheader("Lab Analysis Results")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Step Frequency ($f_0$)", f"{f0_fit:.3f} Hz")
+        c2.metric("Calculated Gravity ($g$)", f"{calc_g:.2f} m/s²")
+        c3.metric("Relative Error", f"{percent_error:.1f}%", delta_color="inverse")
+
+        if env_choice != "Earth":
+            # Predict required frequency for a different planet's gravity
+            # f = sqrt(g / (4 * pi^2 * L)) * 2
+            theory_f = np.sqrt(sim_g / (4 * np.pi**2 * L_eff)) * 2
+            st.info(f"🌌 **Simulation Mode:** On **{env_choice}**, your natural walking frequency would be ~**{theory_f:.3f} Hz**.")
+
+        # --- 6. Visualization ---
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        # Plot raw data
+        ax.plot(frequencies, magnitude_norm, color='red', alpha=0.5, label='Normalized FFT Data')
+        
+        # Plot Lorentzian Fit and Shading
         x_curve = np.linspace(0.5, upper_limit, 1000)
-        ax.plot(x_curve, lorentzian(x_curve, *popt), color='black', lw=2, label=f'Fit: {popt[1]:.3f} Hz')
+        y_curve = lorentzian(x_curve, *popt)
+        ax.plot(x_curve, y_curve, color='black', lw=2.5, label=f'Lorentzian Fit ($f_0$ = {f0_fit:.3f} Hz)')
+        ax.fill_between(x_curve, y_curve, color='lightgray', alpha=0.5, label='Resonance Area')
         
+        # Blue dashed line at peak
+        ax.axvline(f0_fit, color='blue', linestyle='--', alpha=0.8, label='Center Frequency')
+
+        # Formatting
         ax.set_xlim(0, upper_limit)
-        ax.set_xlabel("Frequency (Hz)")
-        ax.set_ylabel("Normalized Magnitude")
-        ax.legend()
+        ax.set_ylim(0, 1.1)
+        ax.set_xlabel("Frequency (Hz)", fontsize=12)
+        ax.set_ylabel("Normalized Magnitude", fontsize=12)
+        ax.set_title("Gait Resonance Spectrum", fontsize=14)
         ax.grid(True, linestyle=':', alpha=0.6)
+        ax.legend(loc='upper right', frameon=True, shadow=True)
         
-        # Output to App
         st.pyplot(fig)
-        
-        col1, col2 = st.columns(2)
-        col1.metric("Step Frequency", f"{popt[1]:.3f} Hz")
-        col2.metric("Est. g Range", f"{g_low:.2f} - {g_high:.2f}")
-        
-        st.info(f"The calculated gravity for a person between {h_min}' and {h_max}' is approximately **{g_low:.2f} to {g_high:.2f} m/s²**.")
 
     except Exception as e:
-        st.error(f"Error processing file: {e}. Check if the CSV format is correct!")
+        st.error(f"Error processing file: {e}")
+        st.warning("Make sure your CSV file is exported from Phyphox and has 'Time (s)' and 'Absolute acceleration (m/s^2)' columns.")
