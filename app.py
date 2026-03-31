@@ -45,7 +45,7 @@ def calculate_g_physics(step_freq, hip_cm, ankle_cm):
     # For a physical pendulum, g = (4 * pi^2 * I) / (m * L_cm * T^2)
     # Using the standard 'effective length' approximation for a human leg:
     # L_eff is approximately 0.6 to 0.7 of L_total.
-    L_eff = 0.65 * L_total 
+    L_eff = 0.50 * L_total 
     g_calc = (4 * np.pi**2 * L_eff) / (stride_period**2)
     return g_calc, L_total
 
