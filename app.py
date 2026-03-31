@@ -25,10 +25,6 @@ h_ankle = st.sidebar.number_input("Floor to Ankle (Talus) [cm]", value=8.0)
 
 st.sidebar.header("2. Gravity Settings")
 local_g = st.sidebar.number_input("Local Gravity (m/s²)", value=9.806)
-env_choice = st.sidebar.selectbox("Simulate Walking On:", ["Earth", "Moon", "Mars", "Jupiter"])
-
-env_g_map = {"Earth": 9.806, "Moon": 1.62, "Mars": 3.71, "Jupiter": 24.79}
-sim_g = env_g_map[env_choice]
 
 # --- 3. Physics & Math Functions ---
 def lorentzian(x, a, x0, gamma):
