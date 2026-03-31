@@ -11,11 +11,11 @@ st.set_page_config(page_title="Inverted Pendulum Lab", layout="centered")
 st.title("Inverted Pendulum Lab")
 st.markdown("""
 Welcome to the Physics Lab! Students deduce the local acceleration due to gravity ($g$)
-by modeling human locomotion as an \term{inverted pendulum}. The validity of this model
-is explored by examining the \term{Froude Number} constraints and biological noise found
+by modeling human locomotion as an **inverted pendulum**. The validity of this model
+is explored by examining the **Froude Number** (Fr) constraints and biological noise found
 in their own gait.
 1. Upload your **Phyphox CSV** file below.
-2. The app will calculate the FFT and estimate **g**.
+2. The app will calculate the FFT (which converts your walking motion from a time signal into a frequency spectrum) to estimate $g$ from your stride period.
 """)
 
 # --- 2. Sidebar: Biometrics & Environment ---
