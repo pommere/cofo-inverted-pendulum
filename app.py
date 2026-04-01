@@ -10,18 +10,20 @@ import os
 
 # --- 1. SETTINGS & BRANDING ---
 # Official College of the Ozarks Branding
-LOGO_URL = "https://www.cofo.edu/Images/CofO_Logo_Header.png" 
+# Load Local Logo
+
+# Make sure 'cofo_logo.png' is uploaded to your GitHub repo
+logo_path = "cofo-logo.jpg"
+
+# Load the image first
+favicon = Image.open("cofo-logo.jpg")
 
 # This MUST be the first Streamlit command
 st.set_page_config(
     page_title="CofO | Inverted Pendulum Lab", 
-    page_icon="🌍", 
+    page_icon=favicon, 
     layout="centered"
 )
-
-# Load Local Logo
-# Make sure 'cofo_logo.png' is uploaded to your GitHub repo
-logo_path = "cofo-logo.jpg"
 
 if os.path.exists(logo_path):
     logo = Image.open(logo_path)
@@ -31,13 +33,12 @@ else:
     st.sidebar.warning(f"Logo '{logo_path}' not found in repo.")
 
 # Sidebar Branding
-st.sidebar.image(LOGO_URL, use_container_width=True)
-st.sidebar.markdown("### **Hard Work U**\nPhysics Department")
+st.sidebar.markdown("### **College of the Ozarks**\nDepartment of Mathematics and Physics")
 st.sidebar.divider()
 
 # Styled Main Header
 st.markdown(f"""
-    <h1 style='color: #710A2C; text-align: center; margin-bottom: 0;'>🌍 Inverted Pendulum Lab</h1>
+    <h1 style='color: #8D203C; text-align: center; margin-bottom: 0;'>🌍 Inverted Pendulum Lab</h1>
     <p style='color: #002147; text-align: center; font-style: italic; font-size: 1.2em; margin-top: 0;'>
     College of the Ozarks | "Hard Work U"
     </p>
