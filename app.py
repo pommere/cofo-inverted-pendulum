@@ -25,32 +25,35 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- CUSTOM BRANDING CSS ---
 st.markdown("""
     <style>
-        /* 1. Force Sidebar text and headers to be White */
-        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
-        [data-testid="stSidebar"] h1, 
-        [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3,
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] span {
+        /* 1. Target EVERYTHING inside the Sidebar and force it to White */
+        section[data-testid="stSidebar"] * {
             color: white !important;
         }
-
-        /* 2. Adjust the sidebar input boxes so they are readable */
-        [data-testid="stSidebar"] .stNumberInput div div input {
-            color: #8D203C !important; /* Maroon text inside white boxes */
+        
+        /* 2. Fix the Input Boxes in the Sidebar so they are readable */
+        /* (The text the student types should be dark so they can see it against the white box) */
+        section[data-testid="stSidebar"] input {
+            color: #8D203C !important; 
         }
 
-        /* 3. Style the sidebar divider to be subtle white */
-        [data-testid="stSidebar"] hr {
-            border-top: 1px solid #ffffff44 !important;
+        /* 3. Ensure the Main Area stays Black (Backup for the config.toml) */
+        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp span {
+            color: #000000;
         }
         
-        /* 4. Keep the Main Page text Black for contrast */
-        .main .block-container p, .main .block-container h1, .main .block-container h2 {
+        /* 4. Special case: Keep the Metric Labels (Step Freq, etc) Black */
+        [data-testid="stMetricLabel"] {
+            color: #444444 !important;
+        }
+        [data-testid="stMetricValue"] {
             color: #000000 !important;
+        }
+
+        /* 5. Make the Sidebar Divider visible but subtle */
+        section[data-testid="stSidebar"] hr {
+            border-top: 1px solid #ffffff44 !important;
         }
     </style>
 """, unsafe_allow_html=True)
