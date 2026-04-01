@@ -81,7 +81,7 @@ with col2:
     # Use your official Patriot Red (#8D203C) and Navy (#002147)
     st.markdown(f"""
         <h1 style='color: #8D203C; margin-bottom: 0; padding-top: 10px;'>Inverted Pendulum Lab</h1>
-        <p style='color: #002147; font-style: italic; font-size: 1.2em; margin-top: 0;'>
+        <p style='color: #002147; font-style: italic; font-size: 1.5em; margin-top: 0;'>
         College of the Ozarks | "Hard Work U"
         </p>
     """, unsafe_allow_html=True)
