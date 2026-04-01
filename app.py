@@ -36,13 +36,22 @@ else:
 st.sidebar.markdown("### **College of the Ozarks**\nDepartment of Mathematics and Physics")
 st.sidebar.divider()
 
-# Styled Main Header
-st.markdown(f"""
-    <h1 style='color: #8D203C; text-align: center; margin-bottom: 0;'>favicon Inverted Pendulum Lab</h1>
-    <p style='color: #002147; text-align: center; font-style: italic; font-size: 1.2em; margin-top: 0;'>
-    College of the Ozarks | "Hard Work U"
-    </p>
-""", unsafe_allow_html=True)
+# --- Styled Main Header with Logo ---
+# Create two columns: a small one for the logo and a large one for the text
+col1, col2 = st.columns([1, 4]) 
+
+with col1:
+    # This places the logo right next to the title
+    st.image("cofo-logo.jpg", width=100) 
+
+with col2:
+    # Use your official Patriot Red (#8D203C) and Navy (#002147)
+    st.markdown(f"""
+        <h1 style='color: #8D203C; margin-bottom: 0; padding-top: 10px;'>Inverted Pendulum Lab</h1>
+        <p style='color: #002147; font-style: italic; font-size: 1.2em; margin-top: 0;'>
+        College of the Ozarks | "Hard Work U"
+        </p>
+    """, unsafe_allow_html=True)
 
 st.markdown(r"""
 Welcome to the Physics Lab! Students deduce the local acceleration due to gravity ($g$)
