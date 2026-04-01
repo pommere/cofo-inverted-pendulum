@@ -2,5 +2,5 @@
 primaryColor = "#8D203C" # Cardinal Red (from COFO branding)
 backgroundColor = "#F0F2F6" # Main background
 secondaryBackgroundColor = "#8D203C" # Sidebar and widget background
-textColor = "#002147" # Navy Blue (Text)
+textColor = "#FFFFFF" # White (Text)
 font = "sans serif"
