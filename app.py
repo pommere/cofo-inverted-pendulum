@@ -38,7 +38,7 @@ st.sidebar.divider()
 
 # Styled Main Header
 st.markdown(f"""
-    <h1 style='color: #8D203C; text-align: center; margin-bottom: 0;'>🌍 Inverted Pendulum Lab</h1>
+    <h1 style='color: #8D203C; text-align: center; margin-bottom: 0;'>favicon Inverted Pendulum Lab</h1>
     <p style='color: #002147; text-align: center; font-style: italic; font-size: 1.2em; margin-top: 0;'>
     College of the Ozarks | "Hard Work U"
     </p>
