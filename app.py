@@ -4,7 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
+from PIL import Image  # Add this for local image handling
 import io
+import os
 
 # --- 1. SETTINGS & BRANDING ---
 # Official College of the Ozarks Branding
@@ -16,6 +18,17 @@ st.set_page_config(
     page_icon="🌍", 
     layout="centered"
 )
+
+# Load Local Logo
+# Make sure 'cofo_logo.png' is uploaded to your GitHub repo
+logo_path = "cofo-logo.jpg"
+
+if os.path.exists(logo_path):
+    logo = Image.open(logo_path)
+    st.sidebar.image(logo, use_container_width=True)
+else:
+    # This acts as a fallback if the file isn't found
+    st.sidebar.warning(f"Logo '{logo_path}' not found in repo.")
 
 # Sidebar Branding
 st.sidebar.image(LOGO_URL, use_container_width=True)
