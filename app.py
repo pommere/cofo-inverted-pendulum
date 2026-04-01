@@ -87,33 +87,30 @@ try:
     calc_g, L_total = calculate_g_physics(f0_fit, h_hip, h_ankle)
     percent_error = abs(calc_g - local_g) / local_g * 100
 
-    # Planetary Logic
-    planets = [
-        ("Pluto", 0.62), ("the Moon", 1.62), ("Mars", 3.71), ("Mercury", 3.70),
-        ("Uranus", 8.69), ("Venus", 8.87), ("Earth", 9.806), ("Saturn", 10.44),
-        ("Neptune", 11.15), ("Jupiter", 24.79), ("a White Dwarf star", 500000.0)
-    ]
-    closest_planet = min(planets, key=lambda x: abs(x[1] - calc_g))
-    planet_name, planet_g = closest_planet
-
     # --- 6. UI: Results Display ---
     st.subheader("Lab Analysis Results")
+    
+    # Calculate gravity as a ratio of the local reference (G-units)
+    g_ratio = calc_g / local_g
+    
     c1, c2, c3 = st.columns(3)
     c1.metric("Step Frequency ($f_0$)", f"{f0_fit:.3f} Hz")
     c2.metric("Calculated Gravity ($g$)", f"{calc_g:.2f} m/s²")
-    c3.metric("Relative Error", f"{percent_error:.1f}%", delta=f"{calc_g - local_g:.2f}", delta_color="inverse")
+    c3.metric("Result in G-units", f"{g_ratio:.2f} g", delta=f"{percent_error:.1f}% Error", delta_color="inverse")
 
-    if percent_error < 5.0:
-        st.success(f"✅ **Mission Control:** Great technique! Your gait is perfectly calibrated for **Earth**.")
-    elif 0.1 <= calc_g <= 30.0:
-        st.warning(f"🚀 **Interplanetary coordinates confirmed:** You're walking on **{planet_name}** (g ≈ {planet_g} m/s²).")
-        if abs(calc_g - 15.0) < 2.0:
-            st.info("💡 **Instructor Note:** You're in the 'Neptune-Jupiter Gap.' This usually happens if your walk is fast and stiff-legged!")
-    elif calc_g > 30.0:
-        st.error(f"☢️ **Gravitational Redline:** Calculated g is **{calc_g:.2f} m/s²**. You're on a **Neutron Star**.")
-        st.info("🔍 **Troubleshooting:** Did you pick the *Step* frequency instead of the *Stride*? Try fitting the lower frequency peak.")
+    if percent_error < 10.0:
+        st.success(f"✅ **Model Calibrated:** Your gait closely follows the inverted pendulum model for Earth gravity.")
+    elif g_ratio > 1.2:
+        st.warning(f"⚠️ **High Gravity Result ({g_ratio:.2f} g):** Your walking frequency is high for your leg length.")
+        st.info("""
+        **Troubleshooting:** * Did you use the **Step** frequency instead of the **Stride** frequency? (Stride = 2 steps).
+        * Were you walking with very 'stiff' legs? This increases the effective restoring force.
+        """)
+    elif g_ratio < 0.8:
+        st.error(f"⚠️ **Low Gravity Result ({g_ratio:.2f} g):** Your gait is extremely fluid or slow.")
+        st.info("🔍 **Troubleshooting:** Check your anatomical measurements (Floor to Hip). If $L_{eff}$ is too small, your calculated $g$ will drop.")
     else:
-        st.error(f"☁️ **Low-Density Drift:** Calculated g is **{calc_g:.2f} m/s²**. You are in **Interstellar Space**.")
+        st.info(f"📊 **Analysis Complete:** Your walk yielded {g_ratio:.2f} g. Review the Froude Number constraints to see if the model holds.")
 
     # --- 7. UI: Visualization ---
     fig, ax = plt.subplots(figsize=(12, 6))
