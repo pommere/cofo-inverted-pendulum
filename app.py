@@ -25,6 +25,36 @@ st.set_page_config(
     layout="centered"
 )
 
+# --- CUSTOM CSS FOR BRANDING CONTRAST ---
+st.markdown("""
+    <style>
+        /* 1. Force the Sidebar background to Navy and text to White */
+        [data-testid="stSidebar"] {
+            background-color: #002147 !important;
+        }
+        
+        /* 2. Target all text, labels, and headers in the sidebar to be White */
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stMetric div {
+            color: white !important;
+        }
+
+        /* 3. Make sure the 'Calculated g' metrics in the MAIN area stay Black */
+        [data-testid="stMetricValue"] {
+            color: black !important;
+        }
+        
+        /* 4. Style the sidebar divider to be a light gray so it's visible */
+        [data-testid="stSidebar"] hr {
+            border-top: 1px solid #ffffff33 !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 if os.path.exists(logo_path):
     logo = Image.open(logo_path)
     st.sidebar.image(logo, use_container_width=True)
@@ -42,7 +72,7 @@ col1, col2 = st.columns([1, 4])
 
 with col1:
     # This places the logo right next to the title
-    st.image("cofo-logo.jpg", width=100) 
+    st.image("cofo-logo.jpg", width=32) 
 
 with col2:
     # Use your official Patriot Red (#8D203C) and Navy (#002147)
