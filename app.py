@@ -25,32 +25,32 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- CUSTOM CSS FOR BRANDING CONTRAST ---
+# --- CUSTOM BRANDING CSS ---
 st.markdown("""
     <style>
-        /* 1. Force the Sidebar background to Navy and text to White */
-        [data-testid="stSidebar"] {
-            background-color: #002147 !important;
-        }
-        
-        /* 2. Target all text, labels, and headers in the sidebar to be White */
+        /* 1. Force Sidebar text and headers to be White */
         [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
         [data-testid="stSidebar"] h1, 
         [data-testid="stSidebar"] h2, 
         [data-testid="stSidebar"] h3,
         [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] .stMetric div {
+        [data-testid="stSidebar"] span {
             color: white !important;
         }
 
-        /* 3. Make sure the 'Calculated g' metrics in the MAIN area stay Black */
-        [data-testid="stMetricValue"] {
-            color: black !important;
+        /* 2. Adjust the sidebar input boxes so they are readable */
+        [data-testid="stSidebar"] .stNumberInput div div input {
+            color: #8D203C !important; /* Maroon text inside white boxes */
+        }
+
+        /* 3. Style the sidebar divider to be subtle white */
+        [data-testid="stSidebar"] hr {
+            border-top: 1px solid #ffffff44 !important;
         }
         
-        /* 4. Style the sidebar divider to be a light gray so it's visible */
-        [data-testid="stSidebar"] hr {
-            border-top: 1px solid #ffffff33 !important;
+        /* 4. Keep the Main Page text Black for contrast */
+        .main .block-container p, .main .block-container h1, .main .block-container h2 {
+            color: #000000 !important;
         }
     </style>
 """, unsafe_allow_html=True)
