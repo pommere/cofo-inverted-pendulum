@@ -75,7 +75,7 @@ col1, col2 = st.columns([1, 4])
 
 with col1:
     # This places the logo right next to the title
-    st.image("cofo-logo.jpg", width=32) 
+    st.image("cofo-logo.jpg", width=128) 
 
 with col2:
     # Use your official Patriot Red (#8D203C) and Navy (#002147)
