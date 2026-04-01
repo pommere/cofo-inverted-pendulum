@@ -36,6 +36,10 @@ by modeling human locomotion as an **inverted pendulum**. The validity of this m
 is explored by examining the **Froude Number** ($Fr$) constraints and biological noise found
 in their own gait.
 
+1. Upload your **Phyphox CSV** file below.
+2. The app will calculate the FFT to estimate $g$ from your stride period.
+""")
+
 # --- 2. Sidebar: Biometrics & Environment ---
 st.sidebar.header("1. Anatomical Measurements")
 h_hip = st.sidebar.number_input("Floor to Hip (Greater Trochanter) [cm]", value=90.0)
@@ -120,15 +124,17 @@ try:
         st.success(f"✅ **Model Calibrated:** Your gait closely follows the inverted pendulum model for Earth gravity.")
     
     # Expandable Energy Theory Section
+    # Expandable Energy Theory Section
     with st.expander("📊 Energy Exchange & Velocity Theory"):
-        st.markdown(r"""
-        Walking is a continuous exchange of energy ($E_{total} = KE + PE$). 
+        # We use curly braces {} here because the string is an f-string
+        st.markdown(f"""
+        Walking is a continuous exchange of energy ($E_{{total}} = KE + PE$). 
         * **PE Max:** At the midpoint (apex) of your step, your Center of Mass is highest.
         * **KE Min:** Forward velocity is lowest at the apex as it was 'traded' for height.
         
-        By analyzing your step frequency ($f_0$) and effective leg length ($L_{eff}$), we derived a 
-        **Calculated Velocity** of **%.2f m/s**.
-        """ % v_derived)
+        By analyzing your step frequency ($f_0$) and effective leg length ($L_{{eff}}$), we derived a 
+        **Calculated Velocity** of **{v_derived:.2f} m/s**.
+        """)
 
     # Troubleshooting
     if g_ratio > 1.2:
