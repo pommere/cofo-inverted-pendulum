@@ -208,8 +208,12 @@ try:
         * **PE Max:** At the midpoint (apex) of your step, your Center of Mass is highest.
         * **KE Min:** Forward velocity is lowest at the apex as it was 'traded' for height.
         
-        By analyzing your step frequency ($f_0$) and effective leg length ($L_{{eff}}$), we derived a 
-        **Calculated Velocity** of **{v_derived:.2f} m/s**.
+        ### 🧪 Froude Number Derivation
+        The **Froude Number** ($Fr$) can be calculated directly from your gait frequency and leg length:
+        
+        $$Fr = \\frac{{L_{{eff}} \\cdot f_{{stride}}^2}}{{g}}$$
+        
+        Where $f_{{stride}} = f_{{step}} / 2$. This dimensionless ratio compares the **Inertial Force** tending to lift you off the ground to the **Gravitational Force** keeping you planted.
         
         ---
         ### 👣 Step vs. Stride Breakdown
