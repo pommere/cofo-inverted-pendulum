@@ -228,14 +228,24 @@ try:
 
     # --- 7. UI: Visualization ---
     fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # 1. Plot the raw FFT data
     ax.plot(frequencies, magnitude_norm, color='red', alpha=0.5, label='Normalized FFT Data')
+    
+    # 2. Plot the Lorentzian Fit
     x_curve = np.linspace(0.5, upper_limit, 1000)
     y_curve = lorentzian(x_curve, *popt)
     ax.plot(x_curve, y_curve, color='black', lw=2.5, label=f'Lorentzian Fit ($f_0$ = {f0_fit:.3f} Hz)')
+    
+    # 3. Dynamic Y-Limit Logic
+    # Find the highest point of either the raw data or the fit curve
+    max_val = max(np.max(magnitude_norm[mask]), np.max(y_curve))
+    ax.set_ylim(0, max_val * 1.15)  # Adds 15% "headroom" above the peak
+    
+    # Formatting
     ax.fill_between(x_curve, y_curve, color='lightgray', alpha=0.5)
     ax.axvline(f0_fit, color='blue', linestyle='--', alpha=0.8)
     ax.set_xlim(0, upper_limit)
-    ax.set_ylim(0, 1.1)
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel("Normalized Magnitude")
     ax.legend()
