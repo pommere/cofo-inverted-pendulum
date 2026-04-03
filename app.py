@@ -7,12 +7,11 @@ from scipy.signal import find_peaks
 from PIL import Image
 import io
 import os
-import zipfile  # New addition for handling zip uploads
+import zipfile
 
 # --- 1. SETTINGS & BRANDING ---
 logo_path = "cofo-logo.jpg"
 
-# Try to load favicon for the tab
 try:
     favicon = Image.open(logo_path)
     st.set_page_config(
@@ -52,14 +51,11 @@ st.markdown("""
 if os.path.exists(logo_path):
     logo = Image.open(logo_path)
     st.sidebar.image(logo, use_container_width=True)
-else:
-    st.sidebar.warning(f"Logo '{logo_path}' not found.")
 
 st.sidebar.markdown("### **College of the Ozarks**\nDepartment of Mathematics and Physics")
 st.sidebar.divider()
 
 col1, col2 = st.columns([1, 4]) 
-
 with col1:
     if os.path.exists(logo_path):
         st.image(logo_path, width=128) 
@@ -73,11 +69,8 @@ with col2:
     """, unsafe_allow_html=True)
 
 st.markdown(r"""
-Welcome to the Physics Lab! Students deduce the local acceleration due to gravity ($g$)
-by modeling human locomotion as an **inverted pendulum**. 
-
-1. Upload your **Phyphox CSV** or **ZIP** file below.
-2. The app will calculate the FFT to estimate $g$ from your stride period.
+Welcome to the Physics Lab! Upload your **Phyphox CSV** or **ZIP** file below.
+The app will calculate the FFT to estimate $g$ from your stride period.
 """)
 
 # --- 2. Sidebar: Biometrics & Environment ---
@@ -101,14 +94,12 @@ def calculate_g_physics(step_freq, hip_cm, ankle_cm):
 
 # --- 4. File Upload & Processing ---
 uploaded_file = st.file_uploader("Upload your Phyphox Data", type=["csv", "zip"])
-
 df = None
 
 if uploaded_file is not None:
     try:
         if uploaded_file.name.endswith('.zip'):
             with zipfile.ZipFile(uploaded_file) as z:
-                # Find file containing "Raw Data.csv" anywhere in the path
                 target_file = next((f for f in z.namelist() if "Raw Data.csv" in f), None)
                 if target_file:
                     with z.open(target_file) as f:
@@ -124,16 +115,27 @@ if uploaded_file is not None:
         st.error(f"Error reading file: {e}")
         st.stop()
 else:
-    # Synthetic Data Fallback
-    t = np.linspace(0, 10, 1000)
-    synth_accel = 9.8 + 2.0 * np.sin(2 * np.pi * 1.475 * t) + np.random.normal(0, 0.3, 1000)
+    t = np.linspace(0, 15, 1500)
+    synth_accel = 9.8 + 2.0 * np.sin(2 * np.pi * 1.475 * t) + np.random.normal(0, 0.3, 1500)
     df = pd.DataFrame({'Time (s)': t, 'Absolute acceleration (m/s^2)': synth_accel})
-    st.info("💡 **No file uploaded yet.** Displaying synthetic 'Perfect Walk' data (1.475 Hz).")
+    st.info("💡 **No file uploaded yet.** Displaying synthetic 'Perfect Walk' data.")
 
 # --- 5. Data Analysis & Physics ---
 try:
     time = df['Time (s)'].values
     accel = df['Absolute acceleration (m/s^2)'].values
+    
+    # --- NEW: DATA DURATION ERROR HANDLING ---
+    duration = time[-1] - time[0]
+    if duration < 10.0:
+        st.error(f"⚠️ **Recording Too Short:** Your data is only {duration:.1f} seconds long.")
+        st.markdown("""
+        **To get an accurate FFT peak, please try again with a longer walk:**
+        * Record at least **20-30 seconds** of steady walking.
+        * Ensure you have reached a 'steady state' pace before starting the recording or before you stop.
+        * Keep the phone steady in your pocket or against your hip.
+        """)
+        st.stop()
 
     dt = np.mean(np.diff(time))
     accel_detrended = accel - np.mean(accel)
@@ -150,8 +152,15 @@ try:
 
     upper_limit = max(3.0, 1.5 * f_step_guess)
     mask = (frequencies >= 0.5) & (frequencies <= upper_limit)
-    popt, _ = curve_fit(lorentzian, frequencies[mask], magnitude_norm[mask], p0=[1.0, f_step_guess, 0.1])
-    f0_fit = popt[1]
+    
+    # Attempt curve fit with error handling
+    try:
+        popt, _ = curve_fit(lorentzian, frequencies[mask], magnitude_norm[mask], p0=[1.0, f_step_guess, 0.1])
+        f0_fit = popt[1]
+    except:
+        st.warning("⚠️ Could not perfectly fit the Lorentzian curve. Using raw peak frequency instead.")
+        f0_fit = f_step_guess
+        popt = [1.0, f_step_guess, 0.1] # Fallback for plotting
 
     calc_g, L_eff = calculate_g_physics(f0_fit, h_hip, h_ankle)
     percent_error = abs(calc_g - local_g) / local_g * 100
@@ -173,23 +182,14 @@ try:
         st.success(f"✅ **Model Calibrated:** Your gait closely follows the inverted pendulum model.")
     
     with st.expander("📊 Energy Exchange & Velocity Theory"):
-        st.markdown(f"""
-        Walking is a continuous exchange of energy ($E_{{total}} = KE + PE$). 
-        By analyzing your step frequency ($f_0$) and effective leg length ($L_{{eff}}$), we derived a 
-        **Calculated Velocity** of **{v_derived:.2f} m/s**.
-        """)
-
-    if g_ratio > 1.2:
-        st.warning(f"⚠️ **High Gravity Result:** Troubleshooting: Did you use Step frequency instead of Stride?")
-    elif g_ratio < 0.8:
-        st.warning(f"⚠️ **Low Gravity Result:** Troubleshooting: Check anatomical measurements.")
+        st.markdown(f"Walking is an exchange of $KE$ and $PE$. Derived velocity: **{v_derived:.2f} m/s**.")
 
     # --- 7. UI: Visualization ---
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(frequencies, magnitude_norm, color='red', alpha=0.5, label='Normalized FFT Data')
     x_curve = np.linspace(0.5, upper_limit, 1000)
     y_curve = lorentzian(x_curve, *popt)
-    ax.plot(x_curve, y_curve, color='black', lw=2.5, label=f'Lorentzian Fit ($f_0$ = {f0_fit:.3f} Hz)')
+    ax.plot(x_curve, y_curve, color='black', lw=2.5, label=f'Fit ($f_0$ = {f0_fit:.3f} Hz)')
     ax.fill_between(x_curve, y_curve, color='lightgray', alpha=0.5)
     ax.axvline(f0_fit, color='blue', linestyle='--', alpha=0.8)
     ax.set_xlim(0, upper_limit)
@@ -201,3 +201,4 @@ try:
 
 except Exception as e:
     st.error(f"Analysis Error: {e}")
+    st.info("Check your CSV format. Ensure it contains 'Time (s)' and 'Absolute acceleration (m/s^2)'.")
