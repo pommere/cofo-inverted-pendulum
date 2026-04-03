@@ -73,7 +73,7 @@ col1, col2 = st.columns([1, 4])
 
 with col1:
     if os.path.exists(logo_path):
-        st.image(logo_path, width=128) 
+        st.image(logo_path, width=96) 
 
 with col2:
     st.markdown(f"""
