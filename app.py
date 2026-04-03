@@ -140,7 +140,7 @@ if uploaded_file is not None:
 else:
     # Synthetic Data Fallback
     t = np.linspace(0, 20, 2000)
-    synth_accel = 9.8 + 2.0 * np.sin(2 * np.pi * 1.475 * t) + np.random.normal(0, 0.3, 2000)
+    synth_accel = 9.806 + 2.0 * np.sin(2 * np.pi * 1.475 * t) + np.random.normal(0, 0.3, 2000)
     df = pd.DataFrame({'Time (s)': t, 'Absolute acceleration (m/s^2)': synth_accel})
     st.info("💡 **No file uploaded yet.** Displaying synthetic 'Perfect Walk' data (1.475 Hz) as an example.")
 
