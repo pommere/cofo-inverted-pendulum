@@ -10,81 +10,113 @@ import os
 import zipfile
 
 # --- 1. SETTINGS & BRANDING ---
+# Official College of the Ozarks Branding
 logo_path = "cofo-logo.jpg"
 
 try:
     favicon = Image.open(logo_path)
-    st.set_page_config(page_title="CofO | Biokinematic Pendulum", page_icon=favicon, layout="centered")
+    st.set_page_config(
+        page_title="CofO | Inverted Pendulum Lab", 
+        page_icon=favicon, 
+        layout="centered"
+    )
 except:
-    st.set_page_config(page_title="CofO | Biokinematic Pendulum", layout="centered")
+    st.set_page_config(
+        page_title="CofO | Inverted Pendulum Lab", 
+        layout="centered"
+    )
 
 st.markdown("""
     <style>
-        section[data-testid="stSidebar"] * { color: white !important; }
-        section[data-testid="stSidebar"] input { color: #8D203C !important; }
-        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp span { color: #000000; }
-        [data-testid="stMetricLabel"] { color: #444444 !important; }
-        [data-testid="stMetricValue"] { color: #000000 !important; }
-        section[data-testid="stSidebar"] hr { border-top: 1px solid #ffffff44 !important; }
+        /* 1. Target EVERYTHING inside the Sidebar and force it to White */
+        section[data-testid="stSidebar"] * {
+            color: white !important;
+        }
+        
+        /* 2. Fix the Input Boxes in the Sidebar so they are readable */
+        section[data-testid="stSidebar"] input {
+            color: #8D203C !important; 
+        }
+
+        /* 3. Ensure the Main Area stays Black (Backup for the config.toml) */
+        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp span {
+            color: #000000;
+        }
+        
+        /* 4. Special case: Keep the Metric Labels (Step Freq, etc) Black */
+        [data-testid="stMetricLabel"] {
+            color: #444444 !important;
+        }
+        [data-testid="stMetricValue"] {
+            color: #000000 !important;
+        }
+
+        /* 5. Make the Sidebar Divider visible but subtle */
+        section[data-testid="stSidebar"] hr {
+            border-top: 1px solid #ffffff44 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. MAIN HEADER ---
+if os.path.exists(logo_path):
+    logo = Image.open(logo_path)
+    st.sidebar.image(logo, use_container_width=True)
+else:
+    st.sidebar.warning(f"Logo '{logo_path}' not found in repo.")
+
+# Sidebar Branding
+st.sidebar.markdown("### **College of the Ozarks**\nDepartment of Mathematics and Physics")
+st.sidebar.divider()
+
+# --- Styled Main Header with Logo ---
 col1, col2 = st.columns([1, 4]) 
+
 with col1:
-    if os.path.exists(logo_path): st.image(logo_path, width=120) 
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=128) 
 
 with col2:
     st.markdown(f"""
-        <h1 style='color: #8D203C; margin-bottom: 0;'>Biokinematic Pendulum Lab</h1>
-        <p style='color: #002147; font-style: italic; font-size: 1.2em; margin-top: 0;'>
-        Deducing Earth's Gravity via Human Locomotion
+        <h1 style='color: #8D203C; margin-bottom: 0; padding-top: 10px;'>Inverted Pendulum Lab</h1>
+        <p style='color: #002147; font-style: italic; font-size: 1.5em; margin-top: 0;'>
+        College of the Ozarks | "Hard Work U"
         </p>
     """, unsafe_allow_html=True)
 
-# --- 3. INTRODUCTION (FLESHED OUT FROM MANUAL) ---
 st.markdown(r"""
-### **The Inverted Pendulum Model**
-In biomechanics, human gait is modeled as an **Inverted Pendulum**. As you walk, your body trades **Kinetic Energy** ($KE$) for **Gravitational Potential Energy** ($PE$). 
-At the apex of a step, your Center of Mass (CoM) is highest, and your velocity is lowest.
+Welcome to the Physics Lab! Students deduce the local acceleration due to gravity ($g$)
+by modeling human locomotion as an **inverted pendulum**. 
 
-By treating each step as a **Monte Carlo sample**, this app aggregates hundreds of oscillations to isolate the resonant frequency ($f$) of your unique "biological pendulum." 
+By treating each step as a **Monte Carlo sample**, this app aggregates hundreds of oscillations to isolate the resonant frequency ($f_0$) of your unique biological pendulum. The validity of this model is explored by examining the **Froude Number** ($Fr$) constraints.
 
-$$g = 4\pi^2 f^2 L_{CM}$$
-
-**Safety First:** Ensure your device is secured firmly. Avoid looking at the screen while walking!
+1. Upload your **Phyphox** export (**CSV or ZIP**) below.
+2. The app will calculate the FFT to estimate $g$ from your stride period.
 """)
 
-# --- 4. SIDEBAR: ANATOMICAL MEASUREMENTS ---
+# --- 2. Sidebar: Biometrics & Environment ---
 st.sidebar.header("1. Anatomical Measurements")
-st.sidebar.markdown("Measure from the floor to these points:")
-h_hip = st.sidebar.number_input("Floor to Hip (Greater Trochanter) [cm]", value=90.0, help="The pivot point of your leg pendulum.")
+h_hip = st.sidebar.number_input("Floor to Hip (Greater Trochanter) [cm]", value=90.0)
 h_ankle = st.sidebar.number_input("Floor to Ankle (Talus) [cm]", value=8.0)
 
-st.sidebar.header("2. Environment")
-local_g = st.sidebar.number_input("Accepted $g$ (m/s²)", value=9.806)
+st.sidebar.header("2. Gravity Settings")
+local_g = st.sidebar.number_input("Local Gravity (m/s²)", value=9.806)
 
-# --- 5. PHYSICS CALCULATIONS ---
+# --- 3. Physics & Math Functions ---
 def lorentzian(x, a, x0, gamma):
     return a * (gamma**2 / ((x - x0)**2 + gamma**2))
 
-def calculate_physics_results(step_freq, hip_cm, ankle_cm):
-    # L = distance from talus to greater trochanter
-    L_meters = (hip_cm - ankle_cm) / 100.0 
-    # Center of Mass adjustment (0.55L from manual)
-    L_cm_eff = 0.55 * L_meters 
+def calculate_g_physics(step_freq, hip_cm, ankle_cm):
+    L_total = (hip_cm - ankle_cm) / 100.0 
+    # Matches your lab manual's center of mass (0.55L)
+    L_eff = 0.55 * L_total 
     
-    # g = (2*pi*f)^2 * L_cm
-    g_calc = (2 * np.pi * step_freq)**2 * L_cm_eff
-    
-    # Velocity derived from energy exchange theory
-    v_derived = (L_cm_eff * step_freq * np.pi) / 2
-    froude = (v_derived**2) / (9.806 * L_cm_eff)
-    
-    return g_calc, L_cm_eff, v_derived, froude
+    # ⚠️ Resolves the manual's stride vs step notation trap
+    stride_period = 2 / step_freq
+    g_calc = (4 * np.pi**2 * L_eff) / (stride_period**2)
+    return g_calc, L_eff
 
-# --- 6. FILE UPLOAD & PROCESSING ---
-uploaded_file = st.file_uploader("Upload your Phyphox 'Acceleration' Data (CSV or ZIP)", type=["csv", "zip"])
+# --- 4. File Upload & Processing ---
+uploaded_file = st.file_uploader("Upload your Phyphox Data", type=["csv", "zip"])
 df = None
 
 if uploaded_file is not None:
@@ -93,86 +125,115 @@ if uploaded_file is not None:
             with zipfile.ZipFile(uploaded_file) as z:
                 target_file = next((f for f in z.namelist() if "Raw Data.csv" in f), None)
                 if target_file:
-                    with z.open(target_file) as f: df = pd.read_csv(f)
-                    st.success(f"Extracted: {target_file}")
+                    with z.open(target_file) as f:
+                        df = pd.read_csv(f)
+                    st.success(f"Successfully extracted: {target_file}")
                 else:
-                    st.error("Missing 'Raw Data.csv' in ZIP."); st.stop()
+                    st.error("Could not find 'Raw Data.csv' inside the ZIP archive.")
+                    st.stop()
         else:
             df = pd.read_csv(uploaded_file)
-            st.success("CSV Loaded Successfully.")
+            st.success("Successfully loaded your CSV data.")
     except Exception as e:
-        st.error(f"Error: {e}"); st.stop()
+        st.error(f"Error reading file: {e}")
+        st.stop()
 else:
-    # Synthetic Data (Trial 1 Baseline example)
-    t = np.linspace(0, 30, 3000)
-    synth_accel = 9.8 + 2.0 * np.sin(2 * np.pi * 1.5 * t) + np.random.normal(0, 0.4, 3000)
+    # Synthetic Data Fallback
+    t = np.linspace(0, 20, 2000)
+    synth_accel = 9.8 + 2.0 * np.sin(2 * np.pi * 1.475 * t) + np.random.normal(0, 0.3, 2000)
     df = pd.DataFrame({'Time (s)': t, 'Absolute acceleration (m/s^2)': synth_accel})
-    st.info("💡 **No data uploaded.** Showing a synthetic 1.5 Hz baseline walk.")
+    st.info("💡 **No file uploaded yet.** Displaying synthetic 'Perfect Walk' data (1.475 Hz) as an example.")
 
-# --- 7. DATA ANALYSIS ---
+# --- 5. Data Analysis & Physics ---
 try:
-    time, accel = df['Time (s)'].values, df['Absolute acceleration (m/s^2)'].values
-    duration = time[-1] - time[0]
+    time = df['Time (s)'].values
+    accel = df['Absolute acceleration (m/s^2)'].values
     
+    # Check data duration
+    duration = time[-1] - time[0]
     if duration < 10.0:
-        st.error(f"⚠️ **Trial Too Short ({duration:.1f}s):** The manual recommends 20-45s for baseline trials to reduce statistical noise."); st.stop()
+        st.error(f"⚠️ **Recording Too Short:** Your data is only {duration:.1f} seconds long.")
+        st.markdown("To get an accurate FFT peak via Monte Carlo sampling, please record at least **20-30 seconds** of steady walking.")
+        st.stop()
 
-    # FFT Analysis
     dt = np.mean(np.diff(time))
     accel_detrended = accel - np.mean(accel)
     fft_values = np.fft.rfft(accel_detrended)
-    freqs = np.fft.rfftfreq(len(accel), d=dt)
-    mags = np.abs(fft_values) / len(accel)
-    mags /= (np.max(mags) if np.max(mags) != 0 else 1)
+    frequencies = np.fft.rfftfreq(len(accel), d=dt)
+    magnitude_norm = np.abs(fft_values) / len(accel)
+    magnitude_norm /= (np.max(magnitude_norm) if np.max(magnitude_norm) != 0 else 1)
 
-    # Find peak in human gait range (1-4 Hz)
-    mask_search = (freqs >= 1.0) & (freqs <= 4.0)
-    peaks, _ = find_peaks(mags[mask_search], height=0.1, distance=20)
-    f_guess = freqs[mask_search][peaks[0]] if len(peaks) > 0 else 1.5
+    search_mask = (frequencies >= 1.0) & (frequencies <= 4.0)
+    f_search = frequencies[search_mask]
+    m_search = magnitude_norm[search_mask]
+    peaks, _ = find_peaks(m_search, height=0.1, distance=20)
+    f_step_guess = f_search[peaks[0]] if len(peaks) > 0 else f_search[np.argmax(m_search)]
 
-    # Fit Lorentzian to get a precise center frequency
-    mask_fit = (freqs >= 0.5) & (freqs <= 4.5)
+    upper_limit = max(3.0, 1.5 * f_step_guess)
+    mask = (frequencies >= 0.5) & (frequencies <= upper_limit)
+    
     try:
-        popt, _ = curve_fit(lorentzian, freqs[mask_fit], mags[mask_fit], p0=[1.0, f_guess, 0.1])
-        f0 = popt[1]
+        popt, _ = curve_fit(lorentzian, frequencies[mask], magnitude_norm[mask], p0=[1.0, f_step_guess, 0.1])
+        f0_fit = popt[1]
     except:
-        f0 = f_guess; popt = [1.0, f_guess, 0.1]
+        st.warning("⚠️ Could not perfectly fit the Lorentzian curve. Using raw peak frequency instead.")
+        f0_fit = f_step_guess
+        popt = [1.0, f_step_guess, 0.1] 
 
-    # Calculate Results
-    calc_g, L_eff, v_calc, fr = calculate_physics_results(f0, h_hip, h_ankle)
-    err = abs(calc_g - local_g) / local_g * 100
+    calc_g, L_eff = calculate_g_physics(f0_fit, h_hip, h_ankle)
+    percent_error = abs(calc_g - local_g) / local_g * 100
+    g_ratio = calc_g / local_g
+    v_derived = (L_eff * f0_fit * np.pi) / 2
+    froude_num = (v_derived**2) / (local_g * L_eff)
 
-    # --- 8. RESULTS DISPLAY ---
-    st.subheader("Data Extraction & Biometrics")
+    # --- 6. UI: Results Display ---
+    st.subheader("Lab Analysis Results")
+    
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Step Freq ($f$)", f"{f0:.3f} Hz")
-    c2.metric("Eff. Length ($L_{CM}$)", f"{L_eff:.3f} m")
-    c3.metric("Calculated $g$", f"{calc_g:.2f} m/s²")
-    c4.metric("Error", f"{err:.1f}%", delta_color="inverse")
+    c1.metric("Step Frequency ($f_0$)", f"{f0_fit:.3f} Hz")
+    c2.metric("Calculated $g$", f"{calc_g:.2f} m/s²")
+    c3.metric("G-units", f"{g_ratio:.2f} g", delta=f"{percent_error:.1f}% Error", delta_color="inverse")
+    c4.metric("Froude Number", f"{froude_num:.2f}")
 
-    # Froude Number Logic
-    st.markdown(f"### Froude Number ($Fr$): **{fr:.3f}**")
-    if fr < 0.05:
-        st.warning("**Trial 3 (The Shuffler) detected.** Kinetic energy is insufficient to reach the potential energy apex.")
-    elif 0.20 <= fr <= 0.30:
-        st.success("**Optimal Gait detected.** This is your 'Preferred' gait where the model is most accurate.")
-    elif fr >= 0.5:
-        st.error("**Trial 4 (Power Walk) / Transition detected.** You are approaching the limit where walking becomes mechanically expensive.")
-
-    # FFT Plot
-    fig, ax = plt.subplots(figsize=(10, 4))
-    ax.plot(freqs, mags, color='#002147', alpha=0.4, label='Gait Signal (FFT)')
-    ax.plot(freqs[mask_fit], lorentzian(freqs[mask_fit], *popt), color='#8D203C', lw=2, label='Resonant Fit')
-    ax.set_xlim(0, 5); ax.set_ylim(0, 1.1)
-    ax.set_xlabel("Frequency (Hz)"); ax.set_ylabel("Normalized Magnitude")
-    ax.legend(); st.pyplot(fig)
-
-    with st.expander("📖 Synthesis Questions Help"):
+    if froude_num < 0.05:
+        st.warning("🚶 **Trial 3 (The Shuffler) Detected:** Kinetic energy is insufficient to reach the potential energy apex. The pendulum model fails here.")
+    elif froude_num > 0.5:
+        st.error(f"🏃 **Trial 4 (Power Walk / Transition) Detected:** Your Fr is {froude_num:.2f}. At Fr > 0.5, walking becomes mechanically expensive and the model breaks down.")
+    elif percent_error < 10.0:
+        st.success(f"✅ **Model Calibrated:** Your gait closely follows the inverted pendulum model for Earth gravity.")
+    
+    with st.expander("📊 Energy Exchange & Synthesis Help"):
         st.markdown(f"""
-        * **Monte Carlo Sampling:** Your recording contains approximately **{int(f0 * duration)}** individual steps. 
-        * **Velocity:** Based on your $Fr$ and $L_{{CM}}$, your estimated walking speed was **{v_calc:.2f} m/s**.
-        * **Rigid vs. Soft Pendulum:** Note if your calculated $g$ is lower than $9.81$. Could knee flexion be shortening your effective $L$ during the swing?
+        Walking is a continuous exchange of energy ($E_{{total}} = KE + PE$). 
+        * **PE Max:** At the midpoint (apex) of your step, your Center of Mass is highest.
+        * **KE Min:** Forward velocity is lowest at the apex as it was 'traded' for height.
+        
+        By analyzing your step frequency ($f_0$) and effective leg length ($L_{{eff}}$), we derived a 
+        **Calculated Velocity** of **{v_derived:.2f} m/s**.
+        
+        **Monte Carlo Note:** Your {duration:.1f} second recording analyzed approximately **{int(f0_fit * duration)}** individual steps to find this resonant frequency!
         """)
 
+    # Troubleshooting
+    if g_ratio > 1.2:
+        st.warning(f"⚠️ **High Gravity Result:** Check your anatomical measurements. Are you walking with unusually 'stiff' legs?")
+    elif g_ratio < 0.8:
+        st.warning(f"⚠️ **Low Gravity Result:** Could knee flexion be shortening your effective pendulum length during the swing?")
+
+    # --- 7. UI: Visualization ---
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(frequencies, magnitude_norm, color='red', alpha=0.5, label='Normalized FFT Data')
+    x_curve = np.linspace(0.5, upper_limit, 1000)
+    y_curve = lorentzian(x_curve, *popt)
+    ax.plot(x_curve, y_curve, color='black', lw=2.5, label=f'Lorentzian Fit ($f_0$ = {f0_fit:.3f} Hz)')
+    ax.fill_between(x_curve, y_curve, color='lightgray', alpha=0.5)
+    ax.axvline(f0_fit, color='blue', linestyle='--', alpha=0.8)
+    ax.set_xlim(0, upper_limit)
+    ax.set_ylim(0, 1.1)
+    ax.set_xlabel("Frequency (Hz)")
+    ax.set_ylabel("Normalized Magnitude")
+    ax.legend()
+    st.pyplot(fig)
+
 except Exception as e:
-    st.error(f"Analysis Failed: {e}")
+    st.error(f"Analysis Error: {e}")
