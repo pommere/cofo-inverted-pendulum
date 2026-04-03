@@ -108,12 +108,12 @@ def lorentzian(x, a, x0, gamma):
 def calculate_g_physics(step_freq, hip_cm, ankle_cm):
     L_total = (hip_cm - ankle_cm) / 100.0 
     # Matches your lab manual's center of mass (0.55L)
-    L_eff = 0.55 * L_total 
+    L_CM = 0.55 * L_total 
     
     # ⚠️ Resolves the manual's stride vs step notation trap
     stride_period = 2 / step_freq
-    g_calc = (4 * np.pi**2 * L_eff) / (stride_period**2)
-    return g_calc, L_eff
+    g_calc = (4 * np.pi**2 * L_CM) / (stride_period**2)
+    return g_calc, L_CM
 
 # --- 4. File Upload & Processing ---
 uploaded_file = st.file_uploader("Upload your Phyphox Data", type=["csv", "zip"])
@@ -180,11 +180,11 @@ try:
         f0_fit = f_step_guess
         popt = [1.0, f_step_guess, 0.1] 
 
-    calc_g, L_eff = calculate_g_physics(f0_fit, h_hip, h_ankle)
+    calc_g, L_CM = calculate_g_physics(f0_fit, h_hip, h_ankle)
     percent_error = abs(calc_g - local_g) / local_g * 100
     g_ratio = calc_g / local_g
-    v_derived = (L_eff * f0_fit * np.pi) / 2
-    froude_num = (v_derived**2) / (local_g * L_eff)
+    v_derived = (L_CM * f0_fit * np.pi) / 2
+    froude_num = (v_derived**2) / (local_g * L_CM)
 
     # --- 6. UI: Results Display ---
     st.subheader("Lab Analysis Results")
@@ -211,7 +211,7 @@ try:
         ### 🧪 Froude Number Derivation
         The **Froude Number** ($Fr$) can be calculated directly from your gait frequency and leg length:
         
-        $$Fr = \\frac{{L_{{eff}} \\cdot f_{{stride}}^2}}{{g}}$$
+        $$Fr = \\frac{{L_{{CM}} \\cdot f_{{stride}}^2}}{{g}}$$
         
         Where $f_{{stride}} = f_{{step}} / 2$. This dimensionless ratio compares the **Inertial Force** tending to lift you off the ground to the **Gravitational Force** keeping you planted.
         
@@ -228,7 +228,7 @@ try:
     if g_ratio > 1.2:
         st.warning(f"⚠️ **High Gravity Result:** Check your anatomical measurements. Are you walking with unusually 'stiff' legs?")
     elif g_ratio < 0.8:
-        st.warning(f"⚠️ **Low Gravity Result:** Could knee flexion be shortening your effective pendulum length during the swing?")
+        st.warning(f"⚠️ **Low Gravity Result:** Could knee flexion be shortening your CMective pendulum length during the swing?")
 
     # --- 7. UI: Visualization ---
     fig, ax = plt.subplots(figsize=(12, 6))
