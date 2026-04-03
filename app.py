@@ -211,7 +211,13 @@ try:
         By analyzing your step frequency ($f_0$) and effective leg length ($L_{{eff}}$), we derived a 
         **Calculated Velocity** of **{v_derived:.2f} m/s**.
         
-        **Monte Carlo Note:** Your {duration:.1f} second recording analyzed approximately **{int(f0_fit * duration)}** individual steps to find this resonant frequency!
+        ---
+        ### 👣 Step vs. Stride Breakdown
+        In biomechanics, a **step** is a single footfall (e.g., right foot hits the ground), while a **stride** is a full continuous cycle (two steps: right foot to right foot). 
+        
+        **Formula:** $f_{{stride}} = \\frac{{f_{{step}}}}{2}$
+        
+        **Monte Carlo Note:** Your {duration:.1f} second recording analyzed approximately **{int(f0_fit * duration)}** individual steps (which is **{int((f0_fit / 2) * duration)}** full strides) to find this resonant frequency!
         """)
 
     # Troubleshooting
