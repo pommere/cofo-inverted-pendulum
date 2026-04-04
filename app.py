@@ -11,7 +11,7 @@ import zipfile
 
 # --- 1. SETTINGS & BRANDING ---
 # Official College of the Ozarks Branding
-logo_path = "cofo-logo.png"
+logo_path = "cofo-logo.jpg"
 
 try:
     favicon = Image.open(logo_path)
